@@ -73,7 +73,7 @@ export const config: ServerConfig = {
   turnTimeoutMs: parseInt(process.env.TURN_TIMEOUT_MS || '15000', 10),
   gracePeriodMs: parseInt(process.env.GRACE_PERIOD_MS || '30000', 10),
   cleanupSweepIntervalMs: parseInt(process.env.CLEANUP_SWEEP_MS || '300000', 10),
-  idleAuthTimeoutMs: parseInt(process.env.IDLE_AUTH_TIMEOUT_MS || '10000', 10),
+  idleAuthTimeoutMs: parseInt(process.env.IDLE_AUTH_TIMEOUT_MS || '120000', 10),
   logEnabled: process.env.LOG_ENABLED !== 'false',
   adminApiKey: process.env.ADMIN_API_KEY || 'rl_admin_default_sec_token_987654',
 };

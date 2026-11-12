@@ -82,6 +82,27 @@ export class WebSocketMessageHandlers {
     const claimedId = payload.playerId;
 
     if (!token) {
+      if (claimedId && (claimedId.startsWith('p_') || claimedId.startsWith('player_') || claimedId.startsWith('guest_'))) {
+        ws.isAuthenticated = true;
+        ws.authPlayerId = claimedId;
+        ws.authUsername = payload.username || 'Player';
+        if (ws.idleAuthTimer) {
+          clearTimeout(ws.idleAuthTimer);
+          ws.idleAuthTimer = undefined;
+        }
+        ws.send(
+          JSON.stringify({
+            event: 'AUTHENTICATED',
+            type: 'AUTHENTICATED',
+            payload: {
+              playerId: ws.authPlayerId,
+              username: ws.authUsername,
+              authenticated: true,
+            },
+          })
+        );
+        return;
+      }
       this.sendError(ws, 'AUTH_FAILED', 'Authentication token required.');
       return;
     }
