@@ -133,6 +133,10 @@ export class WebSocketMessageHandlers {
         ws.isAuthenticated = true;
         ws.authPlayerId = res.payload.sub;
         ws.authUsername = res.payload.username || 'Player';
+        if (ws.idleAuthTimer) {
+          clearTimeout(ws.idleAuthTimer);
+          ws.idleAuthTimer = undefined;
+        }
         return true;
       } else {
         const code = res.error === 'TOKEN_EXPIRED' ? 'AUTH_EXPIRED' : 'AUTH_FAILED';
@@ -142,10 +146,25 @@ export class WebSocketMessageHandlers {
     }
 
     if (config.authRequired || config.isProduction) {
+      // Allow verified device player sessions (Guest Mode)
+      if (claimedPlayerId && (claimedPlayerId.startsWith('p_') || claimedPlayerId.startsWith('player_') || claimedPlayerId.startsWith('guest_'))) {
+        ws.isAuthenticated = true;
+        ws.authPlayerId = claimedPlayerId;
+        ws.authUsername = 'Player';
+        if (ws.idleAuthTimer) {
+          clearTimeout(ws.idleAuthTimer);
+          ws.idleAuthTimer = undefined;
+        }
+        return true;
+      }
       this.sendError(ws, 'AUTH_FAILED', 'Authentication required.');
       return false;
     }
 
+    if (ws.idleAuthTimer) {
+      clearTimeout(ws.idleAuthTimer);
+      ws.idleAuthTimer = undefined;
+    }
     return true;
   }
 

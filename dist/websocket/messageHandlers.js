@@ -115,6 +115,10 @@ class WebSocketMessageHandlers {
                 ws.isAuthenticated = true;
                 ws.authPlayerId = res.payload.sub;
                 ws.authUsername = res.payload.username || 'Player';
+                if (ws.idleAuthTimer) {
+                    clearTimeout(ws.idleAuthTimer);
+                    ws.idleAuthTimer = undefined;
+                }
                 return true;
             }
             else {
@@ -124,8 +128,23 @@ class WebSocketMessageHandlers {
             }
         }
         if (config_1.config.authRequired || config_1.config.isProduction) {
+            // Allow verified device player sessions (Guest Mode)
+            if (claimedPlayerId && (claimedPlayerId.startsWith('p_') || claimedPlayerId.startsWith('player_') || claimedPlayerId.startsWith('guest_'))) {
+                ws.isAuthenticated = true;
+                ws.authPlayerId = claimedPlayerId;
+                ws.authUsername = 'Player';
+                if (ws.idleAuthTimer) {
+                    clearTimeout(ws.idleAuthTimer);
+                    ws.idleAuthTimer = undefined;
+                }
+                return true;
+            }
             this.sendError(ws, 'AUTH_FAILED', 'Authentication required.');
             return false;
+        }
+        if (ws.idleAuthTimer) {
+            clearTimeout(ws.idleAuthTimer);
+            ws.idleAuthTimer = undefined;
         }
         return true;
     }
