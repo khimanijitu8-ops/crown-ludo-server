@@ -1,0 +1,59 @@
+# ==============================================================================
+# 👑 ROYAL LUDO 3D — RENDER BLUEPRINT SPECIFICATION
+# One-click deployment for Node.js Backend + PostgreSQL + Redis on Render
+# ==============================================================================
+
+services:
+  # 🚀 Real-Time Web Service (Node.js + TypeScript + WebSocket)
+  - type: web
+    name: royal-ludo-server
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: server
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: royal-ludo-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: royal-ludo-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: AUTH_REQUIRED
+        value: "true"
+      - key: ALLOWED_ORIGINS
+        value: "https://royal-ludo-server.onrender.com"
+      - key: MAX_ROOMS
+        value: "200"
+      - key: MAX_CONNECTIONS_PER_IP
+        value: "30"
+
+databases:
+  # 🐘 Persistent PostgreSQL Database
+  - name: royal-ludo-postgres
+    plan: free
+    region: oregon
+    databaseName: royal_ludo_db
+    user: royal_user
+    ipAllowList: [] # Internal network access
+
+  # ⚡ Distributed Redis Cache & Pub/Sub
+  - name: royal-ludo-redis
+    type: redis
+    plan: free
+    region: oregon
+    ipAllowList: [] # Internal network access

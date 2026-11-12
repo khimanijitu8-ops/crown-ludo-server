@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # 👑 Authoritative Game Server
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: royal-ludo-server
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=development
+      - PORT=8080
+      - DATABASE_URL=postgres://royal_user:royal_password@postgres:5432/royal_ludo_db
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=dev_jwt_secret_royal_ludo_3d_insecure_only_for_local_testing_12345
+      - JWT_REFRESH_SECRET=dev_refresh_secret_royal_ludo_3d_insecure_local_testing_67890
+      - AUTH_REQUIRED=false
+      - LOG_ENABLED=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # 🐘 PostgreSQL Database (Persistent Data)
+  postgres:
+    image: postgres:16-alpine
+    container_name: royal-ludo-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=royal_user
+      - POSTGRES_PASSWORD=royal_password
+      - POSTGRES_DB=royal_ludo_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U royal_user -d royal_ludo_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ⚡ Redis (Distributed Matchmaking, Pub/Sub & Caching)
+  redis:
+    image: redis:7-alpine
+    container_name: royal-ludo-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  redisdata:
