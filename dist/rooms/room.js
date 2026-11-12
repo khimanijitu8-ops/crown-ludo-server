@@ -191,16 +191,27 @@ class GameRoom {
         const seq = this.nextSeq();
         if (rollResult.autoPassed) {
             this.pendingRoll = null;
+            const nextColor = this.serverGameState.players[this.serverGameState.activePlayerIndex]?.color;
             this.broadcast('DICE_ROLLED', {
                 playerColor: activePlayer.color,
                 rollValue,
+                rolledValue: rollValue,
                 legalMoves: [],
+                movableTokenIds: [],
                 remainingTurnTimeMs: 0,
                 stateSeq: seq,
                 autoPassed: true,
+                isAutoPass: true,
             });
             this.broadcast('TURN_CHANGED', {
-                currentTurn: this.serverGameState.players[this.serverGameState.activePlayerIndex]?.color,
+                currentTurn: nextColor,
+                nextColor,
+                turnDurationMs: this.turnDurationMs,
+                stateSeq: seq,
+            });
+            this.broadcast('TURN_PASSED', {
+                currentTurn: nextColor,
+                nextColor,
                 turnDurationMs: this.turnDurationMs,
                 stateSeq: seq,
             });
@@ -217,10 +228,13 @@ class GameRoom {
         this.broadcast('DICE_ROLLED', {
             playerColor: activePlayer.color,
             rollValue,
+            rolledValue: rollValue,
             legalMoves,
+            movableTokenIds: legalMoves,
             remainingTurnTimeMs: this.turnDurationMs,
             stateSeq: seq,
             autoPassed: false,
+            isAutoPass: false,
         });
         this.startTurnTimer();
         return { rollValue, legalMoves };
@@ -233,16 +247,19 @@ class GameRoom {
             return null;
         const moveResult = ludoEngine.executeMove(this.serverGameState, tokenId);
         this.serverGameState = moveResult.nextState;
+        const rolledVal = this.pendingRoll.rollValue;
         this.pendingRoll = null;
         const seq = this.nextSeq();
         this.broadcast('TOKEN_MOVED', {
             playerColor: activePlayer.color,
             tokenId,
+            diceValue: rolledVal,
             captured: moveResult.hasKilled,
             extraTurn: moveResult.extraTurn,
             reachedHome: moveResult.reachedHome,
             killedInfo: moveResult.killedInfo,
             serverGameState: this.serverGameState,
+            currentGameState: this.serverGameState,
             stateSeq: seq,
         });
         if (this.serverGameState.gameStatus === 'FINISHED') {
@@ -260,8 +277,16 @@ class GameRoom {
             });
             return moveResult;
         }
+        const nextColor = this.serverGameState.players[this.serverGameState.activePlayerIndex]?.color;
         this.broadcast('TURN_CHANGED', {
-            currentTurn: this.serverGameState.players[this.serverGameState.activePlayerIndex]?.color,
+            currentTurn: nextColor,
+            nextColor,
+            turnDurationMs: this.turnDurationMs,
+            stateSeq: seq,
+        });
+        this.broadcast('TURN_PASSED', {
+            currentTurn: nextColor,
+            nextColor,
             turnDurationMs: this.turnDurationMs,
             stateSeq: seq,
         });

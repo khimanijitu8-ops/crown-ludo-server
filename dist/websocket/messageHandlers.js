@@ -180,7 +180,19 @@ class WebSocketMessageHandlers {
         const playerId = ws.authPlayerId || payload.playerId || `p_${Date.now()}`;
         const name = payload.name || ws.authUsername || 'Player';
         try {
-            matchmaker_1.matchmaker.enqueue(ws, playerId, name, playerCount);
+            const result = matchmaker_1.matchmaker.enqueue(ws, playerId, name, playerCount);
+            if (result.queued && !result.matchedRoom) {
+                const queueSize = matchmaker_1.matchmaker.queues[playerCount]?.length || 1;
+                ws.send(JSON.stringify({
+                    event: 'QUICK_MATCH_QUEUED',
+                    type: 'QUICK_MATCH_QUEUED',
+                    payload: {
+                        position: queueSize,
+                        queueSize: queueSize,
+                        playerCount,
+                    },
+                }));
+            }
         }
         catch (err) {
             this.sendError(ws, err.message.split(':')[0] || 'MATCHMAKING_ERROR', err.message);
