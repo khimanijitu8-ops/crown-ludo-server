@@ -47,6 +47,8 @@ const defaultAllowedOrigins = [
   'http://localhost:3000',
   'http://localhost:8081',
   'http://localhost:19006',
+  'https://crown-ludo-server.onrender.com',
+  'http://crown-ludo-server.onrender.com',
   'https://royal-ludo-server.onrender.com',
   'https://royalludo.com',
 ];

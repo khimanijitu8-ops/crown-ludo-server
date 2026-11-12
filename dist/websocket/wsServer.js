@@ -24,9 +24,9 @@ class GameWebSocketServer {
     handleUpgrade(req, socket, head) {
         const origin = req.headers['origin'];
         const clientIp = this.getClientIp(req);
-        // Origin verification
-        if (origin) {
-            const allowed = config_1.config.allowedOrigins.some((ao) => origin === ao || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'));
+        // Origin verification (allow mobile apps where origin is absent, file://, or onrender domain)
+        if (origin && origin !== 'null' && origin !== 'file://') {
+            const allowed = config_1.config.allowedOrigins.some((ao) => origin === ao || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:') || origin.endsWith('.onrender.com'));
             if (!allowed) {
                 socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
                 socket.destroy();
