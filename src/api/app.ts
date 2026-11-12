@@ -30,6 +30,14 @@ export function createExpressApp(): Express {
   app.use(express.urlencoded({ extended: true }));
 
   // Root health endpoints (both /health and /api/health)
+  app.get('/', (req: Request, res: Response) => {
+    res.json({
+      name: 'Crown Ludo 3D Game Server',
+      status: 'ONLINE',
+      version: '2.0.0',
+      health: '/health',
+    });
+  });
   app.use('/health', healthRoutes);
   app.use('/api/health', healthRoutes);
 

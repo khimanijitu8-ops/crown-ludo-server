@@ -31,6 +31,14 @@ function createExpressApp() {
     app.use(express_1.default.json({ limit: '1mb' }));
     app.use(express_1.default.urlencoded({ extended: true }));
     // Root health endpoints (both /health and /api/health)
+    app.get('/', (req, res) => {
+        res.json({
+            name: 'Crown Ludo 3D Game Server',
+            status: 'ONLINE',
+            version: '2.0.0',
+            health: '/health',
+        });
+    });
     app.use('/health', healthRoutes_1.healthRoutes);
     app.use('/api/health', healthRoutes_1.healthRoutes);
     // Modular API routes
