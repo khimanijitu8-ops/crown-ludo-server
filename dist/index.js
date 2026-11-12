@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createGameServer = createGameServer;
 exports.startServer = startServer;
 const http_1 = __importDefault(require("http"));
+const https_1 = __importDefault(require("https"));
 const config_1 = require("./config");
 const db_1 = require("./database/db");
 const redisClient_1 = require("./redis/redisClient");
@@ -56,7 +57,7 @@ function createGameServer(customConfig = {}) {
 }
 async function startServer() {
     console.log('👑 ==============================================================');
-    console.log('👑 ROYAL LUDO 3D — PRODUCTION BACKEND INITIALIZING');
+    console.log('👑 CROWN LUDO 3D — PRODUCTION BACKEND INITIALIZING');
     console.log(`👑 Environment: ${config_1.config.env.toUpperCase()} | Port: ${config_1.config.port}`);
     console.log('👑 ==============================================================');
     // Initialize DB and run migrations
@@ -66,12 +67,23 @@ async function startServer() {
     await redisClient_1.redis.init();
     const instance = createGameServer();
     instance.server.listen(config_1.config.port, '0.0.0.0', () => {
-        console.log(`🚀 [Royal Ludo Server] HTTP & WebSocket online at http://0.0.0.0:${config_1.config.port}`);
+        console.log(`🚀 [Crown Ludo Server] HTTP & WebSocket online at http://0.0.0.0:${config_1.config.port}`);
         console.log(`📊 Health Endpoint: http://0.0.0.0:${config_1.config.port}/health`);
         console.log(`📡 WebSocket URL: ws://0.0.0.0:${config_1.config.port}`);
     });
+    // Keep-alive self-ping to prevent Render Free tier from spinning down (10m interval < 15m cutoff)
+    const KEEP_ALIVE_URL = process.env.KEEP_ALIVE_URL || 'https://crown-ludo-server.onrender.com/health';
+    const KEEP_ALIVE_INTERVAL = 10 * 60 * 1000;
+    const keepAliveTimer = setInterval(() => {
+        https_1.default.get(KEEP_ALIVE_URL, (res) => {
+            console.log(`💓 [KeepAlive] Ping to ${KEEP_ALIVE_URL} -> HTTP ${res.statusCode}`);
+        }).on('error', (err) => {
+            console.warn(`⚠️ [KeepAlive] Self-ping error: ${err.message}`);
+        });
+    }, KEEP_ALIVE_INTERVAL);
     const handleTermination = (signal) => {
         console.log(`\n🛑 [Server] Received ${signal}. Initiating graceful shutdown...`);
+        clearInterval(keepAliveTimer);
         instance.close(() => {
             console.log('✅ [Server] All sockets, rooms, and database pools closed cleanly.');
             process.exit(0);
